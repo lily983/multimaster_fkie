@@ -31,21 +31,21 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from datetime import datetime
+from multimaster_msgs_fkie.msg import MasterState
 from python_qt_binding import loadUi
 from python_qt_binding.QtCore import QFile, QPoint, QSize, Qt, QTimer, Signal
 from python_qt_binding.QtGui import QDesktopServices, QIcon, QKeySequence, QPixmap
 import getpass
 import os
+import roslib
+import rospy
 import socket
 import time
 import uuid
 import xmlrpclib
 
-from multimaster_msgs_fkie.msg import MasterState
-import roslib
-import rospy
-
 from master_discovery_fkie.common import resolve_url
+
 import node_manager_fkie as nm
 
 from .capability_table import CapabilityTable
@@ -67,12 +67,14 @@ from .select_dialog import SelectDialog
 from .settings_widget import SettingsWidget
 from .sync_dialog import SyncDialog
 from .update_handler import UpdateHandler
+
+
 try:
     from python_qt_binding.QtGui import QApplication, QFileDialog, QMainWindow, QMessageBox, QStackedLayout, QWidget
-    from python_qt_binding.QtGui import QShortcut, QVBoxLayout
+    from python_qt_binding.QtGui import QShortcut, QVBoxLayout, QItemSelectionModel
 except:
     from python_qt_binding.QtWidgets import QApplication, QFileDialog, QMainWindow, QMessageBox, QStackedLayout, QWidget
-    from python_qt_binding.QtWidgets import QShortcut, QVBoxLayout
+    from python_qt_binding.QtWidgets import QShortcut, QVBoxLayout, QItemSelectionModel
 
 
 try:
@@ -165,16 +167,17 @@ class MainWindow(QMainWindow):
 #    self.setCentralWidget(mainWindow)
 
         # init the stack layout which contains the information about different ros master
-        self.stackedLayout = QStackedLayout()
-        self.stackedLayout.setObjectName('stackedLayout')
-        emptyWidget = QWidget()
-        emptyWidget.setObjectName('emptyWidget')
-        self.stackedLayout.addWidget(emptyWidget)
-        self.tabWidget.currentChanged.connect(self.on_currentChanged_tab)
-        self.tabLayout = QVBoxLayout(self.tabPlace)
-        self.tabLayout.setObjectName("tabLayout")
-        self.tabLayout.setContentsMargins(0, 0, 0, 0)
-        self.tabLayout.addLayout(self.stackedLayout)
+#         self.stackedLayout = QStackedLayout()
+#         self.stackedLayout.setObjectName('stackedLayout')
+#         emptyWidget = QWidget()
+#         emptyWidget.setObjectName('emptyWidget')
+#         self.stackedLayout.addWidget(emptyWidget)
+#        self.tabWidget.currentChanged.connect(self.on_currentChanged_tab)
+#         self.tabLayout = QVBoxLayout(self.tabPlace)
+#         self.tabLayout.setObjectName("tabLayout")
+#         self.tabLayout.setContentsMargins(0, 0, 0, 0)
+#         self.tabLayout.addLayout(self.stackedLayout)
+        self.tabPlace.currentChanged.connect(self.on_currentChanged_tab)
 
         # initialize the progress queue
         self._progress_queue = ProgressQueue(self.progressFrame, self.progressBar, self.progressCancelButton)
@@ -360,13 +363,16 @@ class MainWindow(QMainWindow):
         self.hideDocksButton.setArrowType(Qt.RightArrow if checked else Qt.LeftArrow)
 
     def on_currentChanged_tab(self, index):
-        pass
-#    if index == self.tabWidget.widget(0):
-#      self.networkDock.show()
-#      self.launch_dock.show()
-#    else:
-#      self.networkDock.hide()
-#      self.launch_dock.hide()
+        self.masterTableView.clearSelection()
+        name = nm.nameres().mastername(self.tabPlace.currentWidget().masteruri)
+        local = nm.is_local(nm.nameres().getHostname(self.tabPlace.currentWidget().masteruri))
+        name = ''.join([name, ' (localhost)']) if local else name
+        items = self.masterTableView.model().findItems(name, Qt.MatchExactly, column=1)
+        if items:
+            model_index = self.masterTableView.model().indexFromItem(items[0])
+            self.masterTableView.selectionModel().select(model_index, QItemSelectionModel.SelectCurrent)
+        self.currentMaster = self.tabPlace.currentWidget()
+        self.on_master_timecheck()
 
     def readSettings(self):
         if nm.settings().store_geometry:
@@ -511,8 +517,8 @@ class MainWindow(QMainWindow):
             self.masters[masteruri].robot_icon_updated.disconnect()
             if DIAGNOSTICS_AVAILABLE:
                 self.diagnostics_signal.disconnect(self.masters[masteruri].append_diagnostic)
-            self.stackedLayout.removeWidget(self.masters[masteruri])
-            self.tabPlace.layout().removeWidget(self.masters[masteruri])
+            self.tabPlace.removeTab(self.tabPlace.indexOf(self.masters[masteruri]))
+#            self.tabPlace.removeWidget(self.masters[masteruri])
             for cfg in self.masters[masteruri].default_cfgs:
                 self.capabilitiesTable.removeConfig(cfg)
             self.masters[masteruri].setParent(None)
@@ -538,7 +544,7 @@ class MainWindow(QMainWindow):
             self.masters[masteruri].robot_icon_updated.connect(self._on_robot_icon_changed)
             if DIAGNOSTICS_AVAILABLE:
                 self.diagnostics_signal.connect(self.masters[masteruri].append_diagnostic)
-            self.stackedLayout.addWidget(self.masters[masteruri])
+            self.tabPlace.addTab(self.masters[masteruri], nm.nameres().mastername(masteruri))
             if masteruri == self.getMasteruri():
                 if self.default_load_launch:
                     try:
@@ -1303,22 +1309,22 @@ class MainWindow(QMainWindow):
         show_user_field = False
         if isinstance(master, MasterViewProxy):
             self.currentMaster = master
-            self.stackedLayout.setCurrentWidget(master)
+            self.tabPlace.setCurrentWidget(master)
             show_user_field = not master.is_local
             self._add_user_to_combo(self.currentMaster.current_user)
             self.userComboBox.setEditText(self.currentMaster.current_user)
         elif master is None:
             self.currentMaster = None
-            self.stackedLayout.setCurrentIndex(0)
+            self.tabPlace.setCurrentIndex(0)
         else:  # it's masteruri
             self.currentMaster = self.getMaster(master)
             if self.currentMaster is not None:
-                self.stackedLayout.setCurrentWidget(self.currentMaster)
+                self.tabPlace.setCurrentWidget(self.currentMaster)
                 show_user_field = not self.currentMaster.is_local
                 self._add_user_to_combo(self.currentMaster.current_user)
                 self.userComboBox.setEditText(self.currentMaster.current_user)
             else:
-                self.stackedLayout.setCurrentIndex(0)
+                self.tabPlace.setCurrentIndex(0)
         self.user_frame.setVisible(show_user_field)
         self.on_master_timecheck()
 
@@ -1513,7 +1519,7 @@ class MainWindow(QMainWindow):
         :type path: str
         '''
         rospy.loginfo("LOAD launch: %s" % path)
-        master_proxy = self.stackedLayout.currentWidget()
+        master_proxy = self.tabPlace.currentWidget()
         if isinstance(master_proxy, MasterViewProxy):
             try:
                 master_proxy.launchfiles = path
@@ -1535,7 +1541,7 @@ class MainWindow(QMainWindow):
         :type host: str (Default: None)
         '''
         rospy.loginfo("LOAD launch as default: %s" % path)
-        master_proxy = self.stackedLayout.currentWidget()
+        master_proxy = self.tabPlace.currentWidget()
         if isinstance(master_proxy, MasterViewProxy):
             args = list()
             args.append('_package:=%s' % (package_name(os.path.dirname(path))[0]))

@@ -638,7 +638,14 @@ p, li { white-space: pre-wrap; }
          </widget>
         </item>
         <item>
-         <widget class="QWidget" name="tabPlace" native="true"/>
+         <widget class="QTabWidget" name="tabPlace">
+          <property name="documentMode">
+           <bool>true</bool>
+          </property>
+          <property name="movable">
+           <bool>true</bool>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>
