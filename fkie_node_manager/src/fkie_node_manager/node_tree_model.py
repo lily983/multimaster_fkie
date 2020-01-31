@@ -1123,9 +1123,9 @@ class HostItem(GroupItem):
             rospy.logwarn("compare HostItem with unicode depricated")
             return False
         elif isinstance(item, tuple):
-            return nmdurl.equal_uri(self.masteruri, item[0]) and self.host == item[1]
+            return nmdurl.equal_uri(self.masteruri, item[0]) and item[1]in nm.nameres().addresses(self.masteruri)
         elif isinstance(item, HostItem):
-            return nmdurl.equal_uri(self.masteruri, item.masteruri) and self.host == item.host
+            return nmdurl.equal_uri(self.masteruri, item.masteruri) and item.host in nm.nameres().addresses(self.masteruri)
         return False
 
     def __gt__(self, item):

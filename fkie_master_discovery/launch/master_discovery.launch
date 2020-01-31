@@ -36,5 +36,8 @@
     <param name="send_mcast" value="True" />
     <!-- disables the listening to multicast messages. If listen_mcast and send_mcast are False, only unicast socket will be created.  -->
     <param name="listen_mcast" value="True" />
+    <!-- In some cases (e.g. by setting ROS_IP) ROS_MASTER_URI differ from ROS_IP. In this case the nodes will not be synchronized. 
+      So we try to replace the hostname of node URI. -->
+    <param name="replace_hostname_by_masteruri" value="True" />
   </node>
 </launch>

@@ -46,7 +46,7 @@ import xmlrpclib
 
 import interface_finder
 
-from .common import masteruri_from_ros, get_hostname
+from .common import masteruri_from_ros, get_hostname, get_replace_name
 from .filter_interface import FilterInterface
 from .master_info import MasterInfo
 
@@ -130,6 +130,8 @@ class MasterMonitor(object):
         self._create_access_lock = threading.RLock()
         self._lock = threading.RLock()
         self.__masteruri = masteruri_from_ros()
+        self.__masteruri_hostname = get_hostname(self.__masteruri)
+        self.__cache_renamed_hosts = {}
         self.__new_master_state = None
         self.__masteruri_rpc = None
         self.__mastername = None
@@ -140,6 +142,7 @@ class MasterMonitor(object):
             self.__mastername = rospy.get_param('~name')
         self.__mastername = self.getMastername()
         rospy.set_param('/mastername', self.__mastername)
+        self.__replace_hostname_by_masteruri = rospy.get_param('~replace_hostname_by_masteruri', True)
 
         self.__master_state = None
         '''the current state of the ROS master'''
@@ -291,7 +294,8 @@ class MasterMonitor(object):
                     master = xmlrpclib.ServerProxy(self.getMasteruri())
                     code, message, new_uri = master.lookupNode(self.ros_node_name, nodename)
                     with self._lock:
-                        self.__new_master_state.getNode(nodename).uri = None if (code == -1) else new_uri
+                        new_uri_fixed = self._fix_uri(new_uri, nodename)
+                        self.__new_master_state.getNode(nodename).uri = None if (code == -1) else new_uri_fixed
                         if code == -1:
                             self._limited_log(nodename, "can't update contact information. ROS master responds with: %s" % message)
                         try:
@@ -482,11 +486,12 @@ class MasterMonitor(object):
                     r = param_server_multi()
                     for (code, msg, uri), service in zip(r, tmp_slist):
                         if code == 1:
-                            service.uri = uri
+                            fixed_uri = self._fix_uri(uri, service.name)
+                            service.uri = fixed_uri
                             if service.isLocal:
-                                services[service.name] = uri
+                                services[service.name] = fixed_uri
                             else:
-                                self.__cached_services[service.name] = (uri, None, time.time())
+                                self.__cached_services[service.name] = (fixed_uri, None, time.time())
                         else:
                             self._limited_log(service.name, "can't get contact information. ROS master responds with: %s" % msg)
                 except:
@@ -515,11 +520,12 @@ class MasterMonitor(object):
                     r = param_server_multi()
                     for (code, msg, uri), node in zip(r, tmp_nlist):
                         if code == 1:
-                            node.uri = uri
+                            fixed_uri = self._fix_uri(uri, node.name)
+                            node.uri = fixed_uri
                             if node.isLocal:
-                                nodes[node.name] = uri
+                                nodes[node.name] = fixed_uri
                             else:
-                                self.__cached_nodes[node.name] = (uri, None, time.time())
+                                self.__cached_nodes[node.name] = (fixed_uri, None, time.time())
                         else:
                             self._limited_log(node.name, "can't get contact information. ROS master responds with: %s" % msg)
                 except:
@@ -630,8 +636,9 @@ class MasterMonitor(object):
                             # TODO: add nodeuri to the nodes (needs changes in the MSG definitions)
                             # set the sync node only if it has the same uri
                             nuri = getNodeuri(n, m.publisher, m.subscriber, m.services)
+                            nuri_fixed = self._fix_uri(nuri, n)
                             state_node = master_state.getNode(n)
-                            if state_node is not None and (state_node.uri == nuri or nuri is None):
+                            if state_node is not None and (state_node.uri == nuri_fixed or nuri_fixed is None):
                                 state_node.masteruri = m.masteruri
                         except:
                             pass
@@ -655,7 +662,9 @@ class MasterMonitor(object):
         code = -1
         if self.__masteruri_rpc is None:
             master = xmlrpclib.ServerProxy(self.__masteruri)
-            code, message, self.__masteruri_rpc = master.getUri(self.ros_node_name)
+            code, _message, self.__masteruri_rpc = master.getUri(self.ros_node_name)
+            if code >= 0:
+                self.__masteruri_hostname = get_hostname(self.__masteruri_rpc)
         return self.__masteruri_rpc if code >= 0 or self.__masteruri_rpc is not None else self.__masteruri
 
     def getMastername(self):
@@ -804,3 +813,20 @@ class MasterMonitor(object):
 
     def update_master_errors(self, error_list):
         self._master_errors = list(error_list)
+
+    def _fix_uri(self, uri, name):
+        if not self.__replace_hostname_by_masteruri:
+            # fix disabled by configuration
+            return uri
+        # check hostname of the node. On the same hosts it should be the same as one of the master.
+        result = uri
+        uri_hostname = get_hostname(uri)
+        if uri_hostname in self.__cache_renamed_hosts:
+            result = uri.replace(uri_hostname, self.__cache_renamed_hosts[uri_hostname])
+        else:
+            replace_name = get_replace_name(self.__masteruri_hostname, uri_hostname)
+            if replace_name:
+                self._limited_log(name, "used mixed hostname, IP and name. masteruri: %s, nodeuri: %s. It will be replaced by hostname of masteruir. Set 'replace_hostname_by_masteruri' to False to disable it. This message is displayed only once for this hostname!" % (self.getMasteruri(), uri))
+                result = uri.replace(uri_hostname, replace_name)
+                self.__cache_renamed_hosts[uri_hostname] = replace_name
+        return result

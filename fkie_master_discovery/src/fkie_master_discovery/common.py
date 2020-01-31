@@ -32,6 +32,7 @@
 
 import os
 import re
+import socket
 import xmlrpclib
 from urlparse import urlparse
 
@@ -79,6 +80,33 @@ def get_port(url):
         return None
     o = urlparse(url)
     return o.port
+
+
+def get_replace_name(hostname_masteruri, hostname_uri):
+    if hostname_masteruri == hostname_uri:
+        return ''
+    else:
+        try:
+            socket.inet_pton(socket.AF_INET, hostname_uri)
+            # it is an IPv4 address, try to resolve
+            resolved = socket.gethostbyaddr(hostname_uri)
+            if hostname_masteruri in resolved[0] or hostname_masteruri in resolved[1]:
+                return hostname_masteruri
+        except socket.error:
+            try:
+                socket.inet_pton(socket.AF_INET6, hostname_uri)
+                # it is an IPv6 address, try to resolve
+                resolved = socket.gethostbyaddr(hostname_uri)
+                if hostname_masteruri in resolved[0] or hostname_masteruri in resolved[1]:
+                    return hostname_masteruri
+            except socket.error:
+                # it is a name, try to resolve to an address
+                resolved = socket.getaddrinfo(hostname_uri, 0)
+                for (_family, _socktype, _proto, _canonname, sockaddr) in resolved:
+                    if hostname_masteruri == sockaddr[0]:
+                        return hostname_masteruri
+        # it is not the same host
+    return ''
 
 
 def subdomain(hostname):
