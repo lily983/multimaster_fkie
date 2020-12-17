@@ -80,6 +80,10 @@ class UpdateHandler(QObject):
                 print("  Shutdown update threads...")
                 self.__requestedUpdates.clear()
                 for _, thread in self.__updateThreads.items():
+                    thread.update_signal.disconnect(self._on_master_info)
+                    thread.master_errors_signal.disconnect(self._on_master_errors)
+                    thread.error_signal.disconnect(self._on_error)
+                    thread.timediff_signal.disconnect(self._on_timediff)
                     thread.join(3)
                 print("  Update threads are off!")
 
@@ -124,6 +128,10 @@ class UpdateHandler(QObject):
         with self._lock:
             try:
                 thread = self.__updateThreads.pop(masteruri)
+                thread.update_signal.disconnect(self._on_master_info)
+                thread.master_errors_signal.disconnect(self._on_master_errors)
+                thread.error_signal.disconnect(self._on_error)
+                thread.timediff_signal.disconnect(self._on_timediff)
                 del thread
                 monitoruri, delayed_exec = self.__requestedUpdates.pop(masteruri)
                 self.__create_update_thread(monitoruri, masteruri, delayed_exec)
@@ -134,8 +142,8 @@ class UpdateHandler(QObject):
                 print(traceback.format_exc(1))
 
     def __create_update_thread(self, monitoruri, masteruri, delayed_exec):
-        upthread = UpdateThread(monitoruri, masteruri, delayed_exec)
-        self.__updateThreads[masteruri] = upthread
+        self.__updateThreads[masteruri] = UpdateThread(monitoruri, masteruri, delayed_exec)
+        upthread = self.__updateThreads[masteruri]
         upthread.update_signal.connect(self._on_master_info)
         upthread.master_errors_signal.connect(self._on_master_errors)
         upthread.error_signal.connect(self._on_error)

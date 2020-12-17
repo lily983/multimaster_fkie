@@ -113,6 +113,8 @@ class LaunchServerHandler(QObject):
         with self._lock:
             try:
                 thread = self.__updateThreads.pop(serveruri)
+                thread.launch_server_signal.disconnect(self._on_launch_server_info)
+                thread.error_signal.disconnect(self._on_error)
                 del thread
                 delayed_exec = self.__requestedUpdates.pop(serveruri)
                 self.__create_update_thread(serveruri, delayed_exec)

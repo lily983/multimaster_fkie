@@ -121,6 +121,8 @@ class MasterListService(QObject):
         with self._lock:
             try:
                 thread = self.__serviceThreads.pop(masteruri)
+                thread.master_list_signal.disconnect(self._on_master_list)
+                thread.err_signal.disconnect(self._on_err)
                 del thread
             except KeyError:
                 pass
@@ -131,9 +133,13 @@ class MasterListService(QObject):
             try:
                 if on_refresh:
                     thread = self.__refreshThreads.pop(masteruri)
+                    thread.ok_signal.disconnect(self._on_ok)
+                    thread.err_signal.disconnect(self._on_err)
                     del thread
                 else:
                     thread = self.__serviceThreads.pop(masteruri)
+                    thread.master_list_signal.disconnect(self._on_master_list)
+                    thread.err_signal.disconnect(self._on_err)
                     del thread
             except KeyError:
                 pass
@@ -143,6 +149,8 @@ class MasterListService(QObject):
         with self._lock:
             try:
                 thread = self.__refreshThreads.pop(masteruri)
+                thread.ok_signal.disconnect(self._on_ok)
+                thread.err_signal.disconnect(self._on_err)
                 del thread
             except KeyError:
                 pass

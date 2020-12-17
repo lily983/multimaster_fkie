@@ -146,7 +146,7 @@ class DiscoveredMaster(object):
         self.masteruriaddr = None
         self._on_finish = False
         # create a thread to retrieve additional information about the remote ROS master
-        self._get_into_timer = threading.Timer(0.1, self._get_info_threaded)
+        self._get_into_timer = threading.Timer(0.1, self._retrieve_masterinfo)
         self._get_into_timer.start()
 
     def finish(self):
@@ -324,13 +324,8 @@ class DiscoveredMaster(object):
             pass
 
     def __start_get_info_timer(self, timetosleep):
-        self._get_into_timer = threading.Timer(timetosleep, self._get_info_threaded)
+        self._get_into_timer = threading.Timer(timetosleep, self._retrieve_masterinfo)
         self._get_into_timer.start()
-
-    def _get_info_threaded(self):
-        thread = threading.Thread(target=self._retrieve_masterinfo)
-        thread.setDaemon(True)
-        thread.start()
 
     def _retrieve_masterinfo(self):
         '''

@@ -63,7 +63,6 @@ from .common import gen_pattern
 from .filter_interface import FilterInterface
 from .master_info import MasterInfo
 
-
 try:  # to avoid the problems with autodoc on ros.org/wiki site
     from fkie_multimaster_msgs.msg import LinkState, LinkStatesStamped, MasterState, ROSMaster, SyncMasterInfo, SyncTopicInfo, SyncServiceInfo
     from fkie_multimaster_msgs.srv import DiscoverMasters, GetSyncInfo
@@ -268,6 +267,11 @@ class MasterMonitor(object):
                     rospy.logwarn("Error while unsubscribe from `/roslaunch/uris`: %s" % e)
             rospy.loginfo("shutdown own RPC server")
             self.rpcServer.shutdown()
+            if self._rpcThread is not None:
+                try:
+                    self._rpcThread.cancel()
+                except Exception:
+                    pass
             del self.rpcServer.socket
             del self.rpcServer
 
@@ -466,19 +470,20 @@ class MasterMonitor(object):
             try:
                 self._lock.acquire(True)
                 if clear_cache:
+                    self.__cached_nodes.clear()
+                    self.__cached_services.clear()
                     self.__cached_nodes = dict()
                     self.__cached_services = dict()
                 socket.setdefaulttimeout(5)
                 self.__new_master_state = master_state = MasterInfo(self.getMasteruri(), self.getMastername())
                 # update master state
                 master = self._master
-                # master = xmlrpclib.ServerProxy(self.getMasteruri())
                 # get topic types
                 code, message, topicTypes = master.getTopicTypes(self.ros_node_name)
                 # convert topicType list to the dict
                 topicTypesDict = {}
-                for topic, type in topicTypes:
-                    topicTypesDict[topic] = type
+                for topic, type_ in topicTypes:
+                    topicTypesDict[topic] = type_
                 # get system state
                 code, message, state = master.getSystemState(self.ros_node_name)
 
@@ -635,8 +640,6 @@ class MasterMonitor(object):
         for the service ending with ``get_sync_info``. The method will be called by
         :mod:`fkie_master_discovery.master_monitor.MasterMonitor.checkState()`.
         '''
-        # 'print "updateSyncInfo _create_access_lock try...", threading.current_thread()
-
         def getNodeuri(nodename, publisher, subscriber, services):
             for p in publisher:
                 if nodename == p.node:
@@ -846,4 +849,5 @@ class MasterMonitor(object):
             self.__master_state = None
 
     def update_master_errors(self, error_list):
+        del self._master_errors[:]
         self._master_errors = list(error_list)

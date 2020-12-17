@@ -88,7 +88,11 @@ class UpdateThread(QObject, threading.Thread):
         self._monitoruri = monitoruri
         self._masteruri = masteruri
         self._delayed_exec = delayed_exec
+        rospy.logdebug("create update thread for %s" % self._masteruri)
         self.setDaemon(True)
+
+    def __del__(self):
+        rospy.logdebug("delete update thread for %s" % self._masteruri)
 
     def run(self):
         '''

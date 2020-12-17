@@ -41,6 +41,7 @@ import rospy
 from .common import get_hostname
 from .filter_interface import FilterInterface
 
+MASTER_INFO_ID = 0
 
 class NodeInfo(object):
     '''
@@ -651,6 +652,16 @@ class MasterInfo(object):
         self.__timestamp_local = 0
         self.check_ts = 0
         '''the last time, when the state of the ROS master retrieved'''
+        global MASTER_INFO_ID
+        MASTER_INFO_ID = MASTER_INFO_ID + 1
+        self._id = MASTER_INFO_ID
+        rospy.logdebug('create MasterInfo, id=%d' % self._id)
+
+    def __del__(self):
+        rospy.logdebug('delete MasterInfo, id=%d' % self._id)
+        self.__nodelist.clear()
+        self.__topiclist.clear()
+        self.__servicelist.clear()
 
     @staticmethod
     def from_list(l):

@@ -106,9 +106,9 @@ class ProgressQueue(QObject):
         '''
         rospy.logdebug("+ add '%s' with %s to %s" % (descr, kwargs, self))
         pthread = ProgressThread(str(ident), descr, target, kwargs)
-        pthread.finished_signal.connect(self._progress_thread_finished)
-        pthread.error_signal.connect(self._progress_thread_error)
-        pthread.request_interact_signal.connect(self._on_request_interact)
+        # pthread.finished_signal.connect(self._progress_thread_finished)
+        # pthread.error_signal.connect(self._progress_thread_error)
+        # pthread.request_interact_signal.connect(self._on_request_interact)
         self.__progress_queue.append(pthread)
         self._progress_bar.setMaximum(len(self.__progress_queue))
 
@@ -123,6 +123,10 @@ class ProgressQueue(QObject):
             dscr_len = int(self._progress_bar.size().width() / 10)
             self._progress_bar.setFormat("%v/%m - " + self.__progress_queue[0].descr[0:dscr_len])
             self._progress_bar.setValue(0)
+            pthread = self.__progress_queue[0]
+            pthread.finished_signal.connect(self._progress_thread_finished)
+            pthread.error_signal.connect(self._progress_thread_error)
+            pthread.request_interact_signal.connect(self._on_request_interact)
             self.__progress_queue[0].start()
 
     def count(self):
@@ -148,8 +152,15 @@ class ProgressQueue(QObject):
             # be on the safe side that the finished thread is the first thread in the
             # queue (avoid calls from canceled threads)
             if ident == self.__progress_queue[val].id():
+                cth = self.__progress_queue[val]
+                cth.finished_signal.disconnect(self._progress_thread_finished)
+                cth.error_signal.disconnect(self._progress_thread_error)
+                cth.request_interact_signal.disconnect(self._on_request_interact)
                 val = val + 1
             th = self.__progress_queue[val]
+            th.finished_signal.connect(self._progress_thread_finished)
+            th.error_signal.connect(self._progress_thread_error)
+            th.request_interact_signal.connect(self._on_request_interact)
             self._progress_bar.setToolTip(th.descr)
             dscr_len = int(self._progress_bar.size().width() / 10)
             self._progress_bar.setFormat('%v/%m - ' + th.descr[0:dscr_len])
@@ -157,11 +168,11 @@ class ProgressQueue(QObject):
             self._progress_bar.setValue(val)
             # print "PG finished ok", id
         except Exception:
-            # print "PG finished err", id
             for thread in self.__progress_queue:
                 thread.join(1)
             self._progress_frame.setVisible(False)
             self.__running = False
+            del self.__progress_queue[:]
             # print "PG finished delete all..."
             self.__progress_queue = []
             # print "PG finished delete all ok"

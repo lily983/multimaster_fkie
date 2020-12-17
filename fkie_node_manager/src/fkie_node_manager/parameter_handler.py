@@ -42,6 +42,10 @@ except ImportError:
 
 import rospy
 
+THREAD_ID_REQUEST_LIST = 0
+THREAD_ID_REQUEST_PARAM = 0
+THREAD_ID_DELIVER_PARAM = 0
+
 
 class ParameterHandler(QObject):
     '''
@@ -144,6 +148,7 @@ class ParameterHandler(QObject):
         with self._lock:
             try:
                 thread = self.__requestListThreads.pop(0)
+                thread.parameter_list_signal.disconnect(self._on_param_list)
                 del thread
             except KeyError:
                 pass
@@ -153,6 +158,7 @@ class ParameterHandler(QObject):
         with self._lock:
             try:
                 thread = self.__requestValuesThreads.pop(0)
+                thread.parameter_values_signal.disconnect(self._on_param_values)
                 del thread
             except KeyError:
                 pass
@@ -162,6 +168,7 @@ class ParameterHandler(QObject):
         with self._lock:
             try:
                 thread = self.__deliveryThreads.pop(0)
+                thread.result_signal.disconnect(self._on_set_result)
                 del thread
             except KeyError:
                 pass
@@ -180,6 +187,13 @@ class RequestListThread(QObject, threading.Thread):
         self._masteruri = masteruri
         self._ns = ns
         self.setDaemon(True)
+        global THREAD_ID_REQUEST_LIST
+        THREAD_ID_REQUEST_LIST = THREAD_ID_REQUEST_LIST + 1
+        self._id = THREAD_ID_REQUEST_LIST
+        rospy.logdebug("create RequestListThread %d for %s, ns=%s" % (self._id, self._masteruri, self._ns))
+
+    def __del__(self):
+        rospy.logdebug("delete RequestListThread %d" % self._id)
 
     def run(self):
         '''
@@ -216,6 +230,13 @@ class RequestValuesThread(QObject, threading.Thread):
         self._masteruri = masteruri
         self._params = params
         self.setDaemon(True)
+        global THREAD_ID_REQUEST_PARAM
+        THREAD_ID_REQUEST_PARAM = THREAD_ID_REQUEST_PARAM + 1
+        self._id = THREAD_ID_REQUEST_PARAM
+        rospy.logdebug("create RequestValuesThread %d for %s, params=%s" % (self._id, self._masteruri, self._params))
+
+    def __del__(self):
+        rospy.logdebug("delete RequestValuesThread %d" % self._id)
 
     def run(self):
         '''
@@ -261,6 +282,13 @@ class DeliverValuesThread(QObject, threading.Thread):
         self._masteruri = masteruri
         self._params = params
         self.setDaemon(True)
+        global THREAD_ID_DELIVER_PARAM
+        THREAD_ID_DELIVER_PARAM = THREAD_ID_DELIVER_PARAM + 1
+        self._id = THREAD_ID_DELIVER_PARAM
+        rospy.logdebug("create RequestValuesThread %d for %s, params=%s" % (self._id, self._masteruri, self._params))
+
+    def __del__(self):
+        rospy.logdebug("delete DeliverValuesThread %d" % self._id)
 
     def run(self):
         '''

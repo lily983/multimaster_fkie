@@ -104,6 +104,7 @@ class SupervisedPopen(QObject):
         if result_err:
             self.error.emit(self._object_id, self._description, result_err)
         self.finished.emit(self._object_id)
+        self.error.disconnect()
 
     def on_error(self, object_id, descr, msg):
         MessageBox.warning(None, object_id, '%s\n\n'
