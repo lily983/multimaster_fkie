@@ -1,5 +1,24 @@
-## This is a new version with daemon instance!
+## How to use it
+This repo can be used to:
+  * Set and connect two/multiple ROS master in one computer. The two ROS master can publish/subscribe ROS topics to/from each other.
+    * In this first console: (remeber to change the local host to your IP address)
+      * Source the catkin_ws
+      * export ROS_MASTER_URI=http://localhost:11311 
+      * roscore --port 11311 >/dev/null 2>&1 &
+      * rosrun fkie_master_discovery master_discovery >/dev/null 2>&1 &
+      * rosrun fkie_master_sync master_sync >/dev/null 2>&1 &
+      * rostopic pub /test/topic std_msgs/String 'Hello World' -r 1
+    * In the second console:
+      * Source the catkin_ws
+      * export ROS_MASTER_URI=http://localhost:11312
+      * roscore --port 11312 >/dev/null 2>&1 &
+      * rosrun fkie_master_discovery master_discovery >/dev/null 2>&1 &
+      * rosrun fkie_master_sync master_sync >/dev/null 2>&1 &
+      * rostopic echo /test/topic
+  * Set and connect two/multiple ROS master in two/multiple computers. These computers can publish/subscribe ROS topics to/from each other.
 
+
+## This is a new version with daemon instance!
 Whats new:
 
  * Remote access and control of launch and configuration files.
