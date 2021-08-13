@@ -1,6 +1,7 @@
 ## How to use it
 This repo can be used to:
-  * Set and connect two/multiple ROS master in one computer. The two ROS master can publish/subscribe ROS topics to/from each other.
+  * Set and connect two/multiple ROS master in one host. The two ROS master can publish/subscribe ROS topics to/from each other.
+    * Reference link: rosservice call /master_discovery/list_masters
     * In this first console: (remeber to change the local host to your IP address)
       * Source the catkin_ws
       * export ROS_MASTER_URI=http://localhost:11311 
@@ -15,8 +16,10 @@ This repo can be used to:
       * rosrun fkie_master_discovery master_discovery >/dev/null 2>&1 &
       * rosrun fkie_master_sync master_sync >/dev/null 2>&1 &
       * rostopic echo /test/topic
-  * Set and connect two/multiple ROS master in two/multiple computers. These computers can publish/subscribe ROS topics to/from each other.
-
+  * Set and connect two/multiple ROS master in two/multiple hosts. These computers can publish/subscribe ROS topics to/from each other.
+    * First set the local network between two computers. Recommended to use a switch to connect them toghther. 
+      * Reference link: (https://websiteforstudents.com/how-to-edit-the-local-hosts-file-on-ubuntu-18-04-16-04/), (http://wiki.ros.org/ROS/NetworkSetup)
+    * Follow the steps as setting in one host. Using rosservice call /master_discovery/list_masters to check.
 
 ## This is a new version with daemon instance!
 Whats new:
