@@ -1,7 +1,6 @@
 ## How to use it
 This repo can be used to:
   * Set and connect two/multiple ROS master in one host. The two ROS master can publish/subscribe ROS topics to/from each other.
-    * Reference link: rosservice call /master_discovery/list_masters
     * In this first console: (remeber to change the local host to your IP address)
       * Source the catkin_ws
       * export ROS_MASTER_URI=http://localhost:11311 
@@ -24,7 +23,7 @@ This repo can be used to:
         *  rosrun fkie_master_discovery master_discovery >/dev/null 2>&1 &
         *  rosrun fkie_master_sync master_sync >/dev/null 2>&1 &
       * In computer 2: do the same thing as computer 1.
-  * To check if multi-master is running or not, use "rostopic list" to check if there have ros topic /master_discovery/changes, /master_discovery/linkstats.
+  * To check if multi-master is running or not, use "rostopic list" to check if there have ros topic /master_discovery/changes, /master_discovery/linkstats. Also use "rosservice call /master_discovery/list_masters" to check.
 
 ## This is a new version with daemon instance!
 Whats new:
