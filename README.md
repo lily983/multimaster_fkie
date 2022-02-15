@@ -18,11 +18,13 @@ This repo can be used to:
       * Reference link: (https://websiteforstudents.com/how-to-edit-the-local-hosts-file-on-ubuntu-18-04-16-04/), (http://wiki.ros.org/ROS/NetworkSetup)
     * Now setup multi-master between two computers. 
       * In computer 1: 
-        *  source catin_ws
-        *  export ROS_MASTER_URI=http://localhost:11311 
-        *  roscore --port 11311 >/dev/null 2>&1 &
-        *  rosrun fkie_master_discovery master_discovery >/dev/null 2>&1 &
-        *  rosrun fkie_master_sync master_sync >/dev/null 2>&1 &
+      ```
+         source catin_ws
+        export ROS_MASTER_URI=http://localhost:11311 
+         roscore --port 11311 >/dev/null 2>&1 &
+         rosrun fkie_master_discovery master_discovery >/dev/null 2>&1 &
+        rosrun fkie_master_sync master_sync >/dev/null 2>&1 &
+      ```
       * In computer 2: do the same thing as computer 1.
   * To check if multi-master is running or not, use "rostopic list" to check if there have ros topic /master_discovery/changes, /master_discovery/linkstats. Also use "rosservice call /master_discovery/list_masters" to check.
 
