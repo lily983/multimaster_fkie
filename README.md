@@ -27,6 +27,10 @@ This repo can be used to:
       ```
       * In computer 2: do the same thing as computer 1.
   * To check if multi-master is running or not, use "rostopic list" to check if there have ros topic /master_discovery/changes, /master_discovery/linkstats. Also use "rosservice call /master_discovery/list_masters" to check.
+ ```
+rostopic list 
+rosservice call /master_discovery/list_masters
+```
 
 ## This is a new version with daemon instance!
 Whats new:
