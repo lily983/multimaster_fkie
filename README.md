@@ -19,7 +19,7 @@ This repo can be used to:
     * Now setup multi-master between two computers. 
       * In computer 1: 
       ```
-         source catin_ws
+         source devel/setup.bash
         export ROS_MASTER_URI=http://localhost:11311 
          roscore --port 11311 >/dev/null 2>&1 &
          rosrun fkie_master_discovery master_discovery >/dev/null 2>&1 &
