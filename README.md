@@ -2,51 +2,53 @@
 
 ## Set and connect two/multiple ROS master in one host. 
 The two ROS master can publish/subscribe ROS topics to/from each other.
-    In this first console: (remeber to change the local host to your IP address)
+
+In this first console: (remeber to change the local host to your IP address)
     
-    ```
-    cd catkin_ws
-    source devel/setup.bash
-    export ROS_MASTER_URI=http://localhost:11311 
-    roscore --port 11311 >/dev/null 2>&1 &
-    rosrun fkie_master_discovery master_discovery >/dev/null 2>&1 &
-    rosrun fkie_master_sync master_sync >/dev/null 2>&1 
-    ```
+```
+cd catkin_ws
+source devel/setup.bash
+export ROS_MASTER_URI=http://localhost:11311 
+roscore --port 11311 >/dev/null 2>&1 &
+rosrun fkie_master_discovery master_discovery >/dev/null 2>&1 &
+rosrun fkie_master_sync master_sync >/dev/null 2>&1 
+```
    
-    In the second console:
-    
-    ```
-    cd catkin_ws
-    source devel/setup.bash
-    export ROS_MASTER_URI=http://localhost:11312
-    roscore --port 11312 >/dev/null 2>&1 &
-    rosrun fkie_master_discovery master_discovery >/dev/null 2>&1 &
-    rosrun fkie_master_sync master_sync >/dev/null 2>&1 &
-    ```
+In the second console:
+
+```
+cd catkin_ws
+source devel/setup.bash
+export ROS_MASTER_URI=http://localhost:11312
+roscore --port 11312 >/dev/null 2>&1 &
+rosrun fkie_master_discovery master_discovery >/dev/null 2>&1 &
+rosrun fkie_master_sync master_sync >/dev/null 2>&1 &
+```
     
 ## Set and connect two/multiple ROS master in two/multiple hosts. These computers can publish/subscribe ROS topics to/from each other.
-    First set the local network between two computers. Recommended to use a switch to connect them toghther. 
-    Reference link: (https://websiteforstudents.com/how-to-edit-the-local-hosts-file-on-ubuntu-18-04-16-04/), (http://wiki.ros.org/ROS/NetworkSetup)
-    Now setup multi-master between two computers. 
-    
-      In computer 1: 
-      ```
-      cd catkin_ws
-      source devel/setup.bash
-      export ROS_MASTER_URI=http://localhost:11311 
-      roscore --port 11311 >/dev/null 2>&1 &
-      rosrun fkie_master_discovery master_discovery >/dev/null 2>&1 &
-      rosrun fkie_master_sync master_sync >/dev/null 2>&1 &
-      ```
-      In computer 2: do the same thing as computer 1.
-      
-      To check if multi-master is running or not, use "rostopic list" to check if there have ros topic /master_discovery/changes, /master_discovery/linkstats. Also use "rosservice call /master_discovery/list_masters" to check.
-      ```
-      rostopic list 
-      rosservice call /master_discovery/list_masters
-      ```
+First set the local network between two computers. Recommended to use a switch to connect them toghther. 
+Reference link: (https://websiteforstudents.com/how-to-edit-the-local-hosts-file-on-ubuntu-18-04-16-04/), (http://wiki.ros.org/ROS/NetworkSetup)
 
-## This is a new version with daemon instance!
+Now setup multi-master between two computers. 
+    
+In computer 1: 
+```
+cd catkin_ws
+source devel/setup.bash
+export ROS_MASTER_URI=http://localhost:11311 
+roscore --port 11311 >/dev/null 2>&1 &
+rosrun fkie_master_discovery master_discovery >/dev/null 2>&1 &
+rosrun fkie_master_sync master_sync >/dev/null 2>&1 &
+```
+In computer 2: do the same thing as computer 1.
+      
+To check if multi-master is running or not, use "rostopic list" to check if there have ros topic /master_discovery/changes, /master_discovery/linkstats. Also use "rosservice call /master_discovery/list_masters" to check.
+```
+rostopic list 
+rosservice call /master_discovery/list_masters
+```
+
+# This is a new version with daemon instance!
 Whats new:
 
  * Remote access and control of launch and configuration files.
