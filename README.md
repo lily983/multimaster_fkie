@@ -29,6 +29,11 @@ rosrun fkie_master_sync master_sync >/dev/null 2>&1 &
 First set the local network between two computers. Recommended to use a switch to connect them toghther. 
 Reference link: (https://websiteforstudents.com/how-to-edit-the-local-hosts-file-on-ubuntu-18-04-16-04/), (http://wiki.ros.org/ROS/NetworkSetup)
 
+Edit IP address:
+```
+sudo nano /etc/hosts
+```
+
 Now setup multi-master between two computers. 
     
 In computer 1: 
